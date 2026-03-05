@@ -283,6 +283,106 @@
   .pin-btn.del { font-size: 16px; }
   .pin-error { color: #c0392b; font-size: 13px; font-weight: 700; margin-top: 16px; min-height: 20px; letter-spacing: 0.5px; }
 
+
+  /* VOICE NOTE */
+  .notes-wrap { position: relative; }
+  .voice-record-btn {
+    width: 100%; margin-top: 10px; padding: 14px;
+    border-radius: 10px; border: 2px solid var(--accent);
+    background: white; color: var(--accent);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 10px; transition: all 0.2s;
+  }
+  .voice-record-btn.recording {
+    background: #e74c3c; border-color: #e74c3c; color: white;
+    animation: pulse 1s infinite;
+  }
+  .voice-note-indicator {
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
+    background: #e8e7ff; border: 1.5px solid var(--accent);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px;
+    font-weight: 600; color: var(--accent);
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+  .voice-status { font-size: 11px; color: #e74c3c; font-weight: 700; margin-top: 6px; min-height: 16px; letter-spacing: 0.5px; text-align: center; }
+
+  /* BIZ TAG */
+  .biz-tag {
+    display: inline-block; background: var(--accent); color: white;
+    border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase; margin-right: 6px; margin-bottom: 4px;
+  }
+
+  /* DELETE BTN */
+  .delete-btn {
+    padding: 10px 14px; border-radius: 8px; border: 2px solid #e74c3c;
+    background: white; color: #e74c3c; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .delete-btn:active { background: #e74c3c; color: white; }
+
+  /* FILTER BAR */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .filter-pill {
+    padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--accent);
+    background: white; color: var(--accent); font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .filter-pill.active { background: var(--accent); color: white; }
+
+
+  /* OCR */
+  .ocr-btn {
+    width: 100%; margin-bottom: 10px; padding: 12px;
+    border-radius: 10px; border: 2px dashed var(--accent);
+    background: white; color: var(--accent);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .ocr-btn:active { background: var(--surface2); }
+
+
+  /* ARCHIVE */
+  .archive-show-card {
+    background: white; border: 2px solid var(--accent);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .archive-show-header {
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+  }
+  .archive-show-name { font-size: 16px; font-weight: 800; color: var(--accent); }
+  .archive-show-meta { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .archive-show-leads { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none; }
+  .archive-show-leads.open { display: block; }
+  .archive-lead-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .archive-lead-row:last-child { border-bottom: none; }
+  .archive-lead-info { flex: 1; }
+  .archive-lead-name { font-weight: 600; color: #333; }
+  .archive-lead-tag { font-size: 10px; }
+  .archive-actions { display: flex; gap: 6px; margin-top: 12px; }
+  .archive-action-btn {
+    flex: 1; padding: 9px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; border: 2px solid var(--accent);
+  }
+  .archive-action-btn.primary { background: var(--accent); color: white; }
+  .archive-action-btn.secondary { background: white; color: var(--accent); }
+  .archive-box {
+    background: white; border: 2px solid var(--accent); border-radius: var(--radius);
+    padding: 18px; margin-bottom: 16px;
+  }
+  .archive-input-row { display: flex; gap: 8px; }
+  .archive-input-row input { flex: 1; }
+  .archive-save-btn {
+    padding: 11px 16px; border-radius: 8px; border: none;
+    background: var(--accent); color: white; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+
 </style>
 </head>
 <body>
@@ -324,6 +424,7 @@
 <div class="nav">
   <button class="nav-btn active" onclick="showPage('capture', this)">＋ New Lead</button>
   <button class="nav-btn" onclick="showPage('leads', this)">My Leads</button>
+  <button class="nav-btn" onclick="showPage('archive', this)">🗂 Archive</button>
 </div>
 
 <!-- CAPTURE PAGE -->
@@ -346,9 +447,24 @@
         <button class="remove-btn" onclick="removePhoto(event,'back')">✕</button>
       </div>
     </div>
+    <div class="field" id="ocrField" style="display:none">
+      <label>📋 Scanned from card</label>
+      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;font-size:14px;color:#333;line-height:1.5" id="ocrResult"></div>
+    </div>
+    <button class="ocr-btn" id="ocrBtn" onclick="runOCR()" style="display:none">
+      🔍 Scan Card for Contact Details
+    </button>
+    <div class="voice-status" id="ocrStatus"></div>
     <div class="field">
-      <label>Notes on card / contact details</label>
-      <textarea id="cardNotes" placeholder="Name, company, email, phone… or anything from the card"></textarea>
+      <label>Notes</label>
+      <div class="notes-wrap">
+        <textarea id="cardNotes" placeholder="Add notes…" style="min-height:100px"></textarea>
+      </div>
+      <button class="voice-record-btn" id="voiceBtn" onclick="toggleVoice()">
+        <span id="voiceBtnIcon">🎤</span> <span id="voiceBtnLabel">Record Voice Note</span>
+      </button>
+      <div class="voice-status" id="voiceStatus"></div>
+      <div class="voice-note-indicator" id="voiceIndicator" style="display:none">🎤 Voice note recorded — will be included in CRM email</div>
     </div>
   </div>
 
@@ -515,7 +631,23 @@
   </div>
 
   <button class="export-btn" onclick="exportCSV()">⬇ Export All Leads as CSV</button>
-  <div id="leadsList"></div>
+  <div class="filter-bar" id="filterBar"></div>
+<div id="leadsList"></div>
+</div>
+
+
+<!-- ARCHIVE PAGE -->
+<div class="page" id="page-archive">
+  <div class="archive-box">
+    <div class="card-title">🗂 Archive Current Leads</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5">Give this show a name and archive all current leads. They'll be saved permanently and your active list will be cleared.</p>
+    <div class="archive-input-row">
+      <input type="text" id="showName" placeholder="e.g. NY Trade Show March 2026">
+      <button class="archive-save-btn" onclick="archiveCurrentLeads()">Archive</button>
+    </div>
+    <div class="voice-status" id="archiveStatus"></div>
+  </div>
+  <div id="archiveList"></div>
 </div>
 
 <div class="toast" id="toast">Lead saved!</div>
@@ -593,6 +725,7 @@ function handlePhoto(side, input) {
     const slot = document.getElementById('slot-' + side);
     slot.innerHTML = `<img src="${e.target.result}"><button class="remove-btn" onclick="removePhoto(event,'${side}')">✕</button>`;
     slot.classList.add('has-photo');
+    document.getElementById('ocrBtn').style.display = 'flex';
   };
   reader.readAsDataURL(file);
 }
@@ -683,6 +816,7 @@ function saveLead() {
     timestamp: new Date().toLocaleString('en-US'),
     photos: { front: photos.front, back: photos.back },
     cardNotes: document.getElementById('cardNotes').value,
+    voiceNote: voiceTranscript || null,
     bizType: selectedBizType,
     storeUrl: document.getElementById('storeUrl')?.value || '',
     fulfillment: [...document.querySelectorAll('#cond-online .check-pill.selected')].filter(p => ['Buy & carry stock','Dropship','Both'].includes(p.textContent)).map(p => p.textContent),
@@ -712,6 +846,13 @@ function resetForm() {
   selectedCountries.length = 0;
   selectedMfgCountries.length = 0;
   document.getElementById('cardNotes').value = '';
+  voiceTranscript = '';
+  document.getElementById('voiceIndicator').style.display = 'none';
+  document.getElementById('voiceBtnIcon').textContent = '🎤';
+  document.getElementById('voiceBtnLabel').textContent = 'Record Voice Note';
+  document.getElementById('ocrBtn').style.display = 'none';
+  document.getElementById('ocrField').style.display = 'none';
+  document.getElementById('ocrResult').textContent = '';
   document.querySelectorAll('.pill.selected, .check-pill.selected').forEach(p => p.classList.remove('selected'));
   BIZ_CONDITIONALS.forEach(c => document.getElementById('cond-'+c).classList.remove('show'));
   ['cond-us-states','cond-int-countries'].forEach(c => document.getElementById(c).classList.remove('show'));
@@ -751,6 +892,7 @@ function buildLeadEmailBody(l) {
   if (l.mfgProducts) body += `Products/Brands: ${l.mfgProducts}\n`;
   if (l.mfgCountries?.length) body += `Mfg Countries: ${l.mfgCountries.join(', ')}\n`;
   if (l.otherNotes) body += `Notes: ${l.otherNotes}\n`;
+  if (l.voiceNote) body += `\n--- VOICE NOTE TRANSCRIPT ---\n${l.voiceNote}\n`;
   if (l.skus?.length) {
     body += `\n--- SKU INTEREST ---\n`;
     l.skus.forEach(s => { body += `${s.code} – ${s.name}: qty ${s.qty}\n`; });
@@ -773,12 +915,14 @@ function sendToOdoo(leadId) {
 }
 
 function renderLeads() {
+  renderFilterBar();
   const el = document.getElementById('leadsList');
+  const filtered = activeFilter ? leads.filter(l => l.bizType === activeFilter) : leads;
   if (!leads.length) {
     el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>No leads yet. Start capturing!</p></div>`;
     return;
   }
-  el.innerHTML = leads.map(l => {
+  el.innerHTML = filtered.map(l => {
     const thumb = l.photos.front
       ? `<img src="${l.photos.front}" style="width:56px;height:36px;border-radius:6px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0">`
       : `<div style="width:56px;height:36px;border-radius:6px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📇</div>`;
@@ -789,13 +933,14 @@ function renderLeads() {
         ${thumb}
         <div class="lead-meta">
           <div class="lead-time">${l.timestamp}</div>
-          <div class="lead-biz-type">${l.bizType ? l.bizType.charAt(0).toUpperCase()+l.bizType.slice(1) : 'Business type not set'}</div>
+          <div>${l.bizType ? `<span class="biz-tag">${l.bizType}</span>` : '<span style="font-size:11px;color:var(--muted)">No type set</span>'}</div>
           <div class="lead-skus">${skuSummary}</div>
         </div>
       </div>
       ${preview ? `<div class="lead-notes-preview">${preview.substring(0,120)}${preview.length>120?'…':''}</div>` : ''}
       <div class="lead-actions">
         <button class="crm-btn" onclick="sendToOdoo(${l.id})">📧 Send to Odoo CRM</button>
+        <button class="delete-btn" onclick="deleteLead(${l.id})">🗑</button>
       </div>
     </div>`;
   }).join('');
@@ -837,6 +982,7 @@ function showPage(page, btn) {
   document.getElementById('page-' + page).classList.add('active');
   btn.classList.add('active');
   if (page === 'leads') renderLeads();
+  if (page === 'archive') renderArchives();
 }
 
 function updateLeadCount() {
@@ -890,6 +1036,225 @@ function checkAuth() {
 }
 checkAuth();
 
+
+// ── VOICE NOTE ─────────────────────────────────────────────────────────────
+let mediaRecorder = null;
+let recognition = null;
+let isRecording = false;
+let voiceTranscript = '';
+
+function toggleVoice() {
+  if (isRecording) { stopVoice(); } else { startVoice(); }
+}
+
+function startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Voice recognition is not supported on this browser. Please use Safari on iPhone.');
+    return;
+  }
+  voiceTranscript = '';
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+  recognition.onresult = (e) => {
+    voiceTranscript = Array.from(e.results).map(r => r[0].transcript).join(' ');
+  };
+  recognition.onerror = () => stopVoice();
+  recognition.onend = () => { if (isRecording) recognition.start(); };
+  recognition.start();
+  isRecording = true;
+  document.getElementById('voiceBtn').classList.add('recording');
+  document.getElementById('voiceBtnIcon').textContent = '⏹';
+  document.getElementById('voiceBtnLabel').textContent = 'Stop Recording';
+  document.getElementById('voiceStatus').textContent = '● Recording… tap to stop';
+  document.getElementById('voiceIndicator').style.display = 'none';
+}
+
+function stopVoice() {
+  if (recognition) { recognition.stop(); recognition = null; }
+  isRecording = false;
+  document.getElementById('voiceBtn').classList.remove('recording');
+  document.getElementById('voiceBtnIcon').textContent = '🎤';
+  document.getElementById('voiceBtnLabel').textContent = 'Record Voice Note';
+  document.getElementById('voiceStatus').textContent = '';
+  if (voiceTranscript) {
+    document.getElementById('cardNotes').placeholder = 'Voice note added';
+    document.getElementById('voiceIndicator').style.display = 'flex';
+    document.getElementById('cardNotes').value = '';
+  voiceTranscript = '';
+  document.getElementById('voiceIndicator').style.display = 'none';
+  document.getElementById('voiceBtnIcon').textContent = '🎤';
+  document.getElementById('voiceBtnLabel').textContent = 'Record Voice Note';
+  document.getElementById('ocrBtn').style.display = 'none';
+  document.getElementById('ocrField').style.display = 'none';
+  document.getElementById('ocrResult').textContent = '';
+  }
+}
+
+// ── OCR ─────────────────────────────────────────────────────────────────────
+async function runOCR() {
+  const photoSrc = photos.front || photos.back;
+  if (!photoSrc) return;
+  document.getElementById('ocrStatus').textContent = '🔍 Scanning card…';
+  document.getElementById('ocrBtn').disabled = true;
+  try {
+    const { createWorker } = Tesseract;
+    const worker = await createWorker('eng');
+    const { data: { text } } = await worker.recognize(photoSrc);
+    await worker.terminate();
+    const cleaned = text.trim().replace(/\n{3,}/g, '\n\n');
+    document.getElementById('ocrResult').textContent = cleaned;
+    document.getElementById('ocrField').style.display = 'block';
+    document.getElementById('cardNotes').value = cleaned;
+    document.getElementById('ocrStatus').textContent = '✅ Card scanned!';
+    setTimeout(() => document.getElementById('ocrStatus').textContent = '', 2000);
+  } catch(e) {
+    document.getElementById('ocrStatus').textContent = 'Scan failed — try again';
+  }
+  document.getElementById('ocrBtn').disabled = false;
+}
+
+// ── DELETE LEAD ─────────────────────────────────────────────────────────────
+function deleteLead(id) {
+  if (!confirm('Delete this lead? This cannot be undone.')) return;
+  leads = leads.filter(l => l.id !== id);
+  localStorage.setItem('ff_leads', JSON.stringify(leads));
+  updateLeadCount();
+  renderLeads();
+}
+
+// ── FILTER ──────────────────────────────────────────────────────────────────
+let activeFilter = null;
+
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  const types = [...new Set(leads.map(l => l.bizType).filter(Boolean))];
+  if (!types.length) { bar.innerHTML = ''; return; }
+  bar.innerHTML = `<button class="filter-pill ${!activeFilter ? 'active' : ''}" onclick="setFilter(null)">All</button>` +
+    types.map(t => `<button class="filter-pill ${activeFilter === t ? 'active' : ''}" onclick="setFilter('${t}')">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
+}
+
+function setFilter(type) {
+  activeFilter = type;
+  renderLeads();
+}
+
+
+// ── ARCHIVE ──────────────────────────────────────────────────────────────────
+function archiveCurrentLeads() {
+  const name = document.getElementById('showName').value.trim();
+  if (!name) { document.getElementById('archiveStatus').textContent = 'Please enter a show name first.'; return; }
+  if (!leads.length) { document.getElementById('archiveStatus').textContent = 'No active leads to archive.'; return; }
+
+  if (!confirm(`Archive ${leads.length} lead${leads.length>1?'s':''} under "${name}"? Your active leads list will be cleared.`)) return;
+
+  const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+  archives.unshift({
+    id: Date.now(),
+    name: name,
+    date: new Date().toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }),
+    leads: [...leads]
+  });
+  localStorage.setItem('ff_archives', JSON.stringify(archives));
+
+  // Clear active leads
+  leads = [];
+  localStorage.setItem('ff_leads', JSON.stringify(leads));
+  updateLeadCount();
+
+  document.getElementById('showName').value = '';
+  document.getElementById('archiveStatus').textContent = '✅ Archived successfully!';
+  setTimeout(() => document.getElementById('archiveStatus').textContent = '', 3000);
+  renderArchives();
+}
+
+function renderArchives() {
+  const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+  const el = document.getElementById('archiveList');
+  if (!archives.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🗂</div><p>No archived shows yet.</p></div>';
+    return;
+  }
+  el.innerHTML = archives.map((show, si) => `
+    <div class="archive-show-card">
+      <div class="archive-show-header" onclick="toggleArchiveShow(${show.id})">
+        <div>
+          <div class="archive-show-name">${show.name}</div>
+          <div class="archive-show-meta">${show.date} · ${show.leads.length} lead${show.leads.length!==1?'s':''}</div>
+        </div>
+        <span style="font-size:20px;color:var(--accent)" id="arrow-${show.id}">▾</span>
+      </div>
+      <div class="archive-show-leads" id="show-leads-${show.id}">
+        ${show.leads.map(l => `
+          <div class="archive-lead-row">
+            <div class="archive-lead-info">
+              <div class="archive-lead-name">${l.cardNotes ? l.cardNotes.split('\n')[0].substring(0,40) : 'No notes'}</div>
+              <div class="archive-lead-tag">${l.bizType ? `<span class="biz-tag" style="font-size:9px;padding:2px 7px">${l.bizType}</span>` : ''}</div>
+            </div>
+          </div>`).join('')}
+        <div class="archive-actions">
+          <button class="archive-action-btn primary" onclick="exportArchiveCSV(${show.id})">⬇ Export CSV</button>
+          <button class="archive-action-btn secondary" onclick="restoreArchive(${show.id})">↩ Restore to Active</button>
+          <button class="archive-action-btn secondary" style="border-color:#e74c3c;color:#e74c3c;flex:0;padding:9px 12px" onclick="deleteArchive(${show.id})">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleArchiveShow(id) {
+  const el = document.getElementById('show-leads-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  el.classList.toggle('open');
+  arrow.textContent = el.classList.contains('open') ? '▴' : '▾';
+}
+
+function exportArchiveCSV(id) {
+  const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+  const show = archives.find(a => a.id === id);
+  if (!show) return;
+  const rows = [['Date','Biz Type','Card Notes','Store URL','Doors','Locations','Territory','States','Countries','Marketplaces','Fulfillment','Mfg Products','Mfg Countries','Agent Store Types','Other Notes','Voice Note',...SKUS.map(s=>s.code)]];
+  show.leads.forEach(l => {
+    rows.push([
+      l.timestamp, l.bizType||'', l.cardNotes||'', l.storeUrl||'',
+      l.numDoors||'', l.storeLocations||'',
+      l.territory?.geo||'', (l.territory?.states||[]).join('; '), (l.territory?.countries||[]).join('; '),
+      (l.marketplaces||[]).join('; '), (l.fulfillment||[]).join('; '),
+      l.mfgProducts||'', (l.mfgCountries||[]).join('; '),
+      l.agentStoreTypes||'', l.otherNotes||'', l.voiceNote||'',
+      ...SKUS.map(s => { const found = (l.skus||[]).find(x=>x.code===s.code); return found?found.qty:0; })
+    ]);
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${show.name.replace(/\s+/g,'-').toLowerCase()}-leads.csv`;
+  a.click();
+}
+
+function restoreArchive(id) {
+  const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+  const show = archives.find(a => a.id === id);
+  if (!show) return;
+  if (!confirm(`Restore ${show.leads.length} leads from "${show.name}" to your active list?`)) return;
+  leads = [...show.leads, ...leads];
+  localStorage.setItem('ff_leads', JSON.stringify(leads));
+  updateLeadCount();
+  showToast('✦ Leads restored!');
+}
+
+function deleteArchive(id) {
+  if (!confirm('Permanently delete this archived show? This cannot be undone.')) return;
+  let archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+  archives = archives.filter(a => a.id !== id);
+  localStorage.setItem('ff_archives', JSON.stringify(archives));
+  renderArchives();
+}
+
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
 </body>
 </html>
