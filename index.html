@@ -960,11 +960,7 @@ function saveLead() {
   updateLeadCount();
   resetForm();
   showToast('✦ Lead saved!');
-  // Switch to My Leads after short delay so toast is visible
-  setTimeout(() => {
-    const leadsBtn = [...document.querySelectorAll('.nav-btn')].find(b => b.textContent.includes('My Leads'));
-    if (leadsBtn) showPage('leads', leadsBtn);
-  }, 800);
+  setTimeout(() => { showPage('leads'); }, 700);
 }
 
 function resetForm() {
@@ -1131,8 +1127,15 @@ function exportCSV() {
 function showPage(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  btn.classList.add('active');
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+  // Find matching nav btn if not passed in
+  const activeBtn = btn || [...document.querySelectorAll('.nav-btn')].find(b => {
+    return (page === 'capture' && b.textContent.includes('New Lead')) ||
+           (page === 'leads' && b.textContent.includes('My Leads')) ||
+           (page === 'archive' && b.textContent.includes('Archive'));
+  });
+  if (activeBtn) activeBtn.classList.add('active');
   if (page === 'leads') renderLeads();
   if (page === 'archive') renderArchives();
 }
@@ -1212,16 +1215,14 @@ function startVoice() {
   recognition.interimResults = false;
   recognition.lang = 'en-US';
   recognition.onresult = (e) => {
-    let interim = '';
-    for (let i = 0; i < e.results.length; i++) {
+    // Only process new results from resultIndex onwards
+    for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
         voiceTranscript += e.results[i][0].transcript + ' ';
-      } else {
-        interim = e.results[i][0].transcript;
       }
     }
-    const display = (voiceTranscript + interim).trim().split(' ').slice(-6).join(' ');
-    document.getElementById('voiceStatus').textContent = '🎙 ' + display + (display ? '…' : 'Listening…');
+    const words = voiceTranscript.trim().split(' ').slice(-6).join(' ');
+    document.getElementById('voiceStatus').textContent = words ? '🎙 ' + words + '…' : '🎙 Listening…';
   };
   recognition.onerror = (e) => { stopVoice(); };
   recognition.onend = () => { if (isRecording) recognition.start(); };
@@ -1469,6 +1470,7 @@ function setShowAsActive(id) {
 function noShowPrompt() {
   showToast('Go to Archive tab to set up a show first');
   // Flash archive tab
+  showPage('archive');
   document.querySelectorAll('.nav-btn').forEach(b => {
     if (b.textContent.includes('Archive')) {
       b.style.background = '#e74c3c';
