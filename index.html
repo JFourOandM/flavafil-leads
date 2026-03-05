@@ -383,6 +383,84 @@
     font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;
   }
 
+
+  /* SOUND WAVE */
+  .wave-container {
+    display: flex; align-items: center; justify-content: center;
+    gap: 4px; padding: 12px; background: #fff0f0;
+    border-radius: 10px; margin-top: 8px; border: 1.5px solid #e74c3c;
+  }
+  .wave-bar {
+    width: 4px; height: 6px; background: #e74c3c;
+    border-radius: 3px; transition: height 0.1s ease;
+  }
+
+
+  .archive-single-btn {
+    width: 100%; padding: 10px; border-radius: 8px;
+    border: 2px solid var(--accent); background: white;
+    color: var(--accent); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-bottom: 8px;
+  }
+  .archive-single-btn:active { background: var(--accent); color: white; }
+
+  /* Modal overlay */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 500;
+    align-items: center; justify-content: center; padding: 30px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: white; border-radius: var(--radius); padding: 24px;
+    width: 100%; max-width: 360px; border: 2px solid var(--accent);
+  }
+  .modal-title { font-size: 15px; font-weight: 800; color: var(--accent); margin-bottom: 14px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .modal-btn {
+    flex: 1; padding: 12px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; border: 2px solid var(--accent);
+  }
+  .modal-btn.primary { background: var(--accent); color: white; }
+  .modal-btn.secondary { background: white; color: var(--accent); }
+
+
+  /* LIGHTBOX */
+  .lightbox {
+    display: none; position: fixed; inset: 0; z-index: 800;
+    background: rgba(0,0,0,0.92);
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox-img {
+    max-width: 100%; max-height: 75vh;
+    border-radius: 12px; object-fit: contain;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  }
+  .lightbox-tabs {
+    display: flex; gap: 10px; margin-top: 16px;
+  }
+  .lightbox-tab {
+    padding: 8px 20px; border-radius: 20px; border: 2px solid white;
+    background: transparent; color: white; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+  }
+  .lightbox-tab.active { background: white; color: var(--accent); }
+  .lightbox-tab:disabled { opacity: 0.3; cursor: default; }
+  .lightbox-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.2); border: none; color: white;
+    font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-hint {
+    color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 10px;
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  }
+
 </style>
 </head>
 <body>
@@ -463,6 +541,12 @@
       <button class="voice-record-btn" id="voiceBtn" onclick="toggleVoice()">
         <span id="voiceBtnIcon">🎤</span> <span id="voiceBtnLabel">Record Voice Note</span>
       </button>
+      <div class="wave-container" id="voiceWave" style="display:none">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      </div>
       <div class="voice-status" id="voiceStatus"></div>
       <div class="voice-note-indicator" id="voiceIndicator" style="display:none">🎤 Voice note recorded — will be included in CRM email</div>
     </div>
@@ -638,16 +722,25 @@
 
 <!-- ARCHIVE PAGE -->
 <div class="page" id="page-archive">
-  <div class="archive-box">
-    <div class="card-title">🗂 Archive Current Leads</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5">Give this show a name and archive all current leads. They'll be saved permanently and your active list will be cleared.</p>
-    <div class="archive-input-row">
-      <input type="text" id="showName" placeholder="e.g. NY Trade Show March 2026">
-      <button class="archive-save-btn" onclick="archiveCurrentLeads()">Archive</button>
-    </div>
-    <div class="voice-status" id="archiveStatus"></div>
-  </div>
+  <!-- ACTIVE SHOW SECTION -->
+  <div id="activeShowSection"></div>
+  <!-- PAST SHOWS -->
   <div id="archiveList"></div>
+</div>
+
+
+<!-- single lead archive: now instant, no modal -->
+
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightboxDirect()">✕</button>
+  <img class="lightbox-img" id="lightboxImg" src="" alt="Business card">
+  <div class="lightbox-tabs">
+    <button class="lightbox-tab active" id="lbFrontBtn" onclick="switchLightbox('front')">Front</button>
+    <button class="lightbox-tab" id="lbBackBtn" onclick="switchLightbox('back')">Back</button>
+  </div>
+  <div class="lightbox-hint">Tap outside to close</div>
 </div>
 
 <div class="toast" id="toast">Lead saved!</div>
@@ -725,7 +818,11 @@ function handlePhoto(side, input) {
     const slot = document.getElementById('slot-' + side);
     slot.innerHTML = `<img src="${e.target.result}"><button class="remove-btn" onclick="removePhoto(event,'${side}')">✕</button>`;
     slot.classList.add('has-photo');
-    document.getElementById('ocrBtn').style.display = 'flex';
+    const btn = document.getElementById('ocrBtn');
+    btn.style.display = 'flex';
+    btn.innerHTML = '🔍 Scan Card for Contact Details';
+    document.getElementById('ocrStatus').textContent = '';
+    document.getElementById('ocrStatus').style.color = 'var(--muted)';
   };
   reader.readAsDataURL(file);
 }
@@ -853,6 +950,8 @@ function resetForm() {
   document.getElementById('ocrBtn').style.display = 'none';
   document.getElementById('ocrField').style.display = 'none';
   document.getElementById('ocrResult').textContent = '';
+  document.getElementById('voiceWave').style.display = 'none';
+  stopWaveAnimation();
   document.querySelectorAll('.pill.selected, .check-pill.selected').forEach(p => p.classList.remove('selected'));
   BIZ_CONDITIONALS.forEach(c => document.getElementById('cond-'+c).classList.remove('show'));
   ['cond-us-states','cond-int-countries'].forEach(c => document.getElementById(c).classList.remove('show'));
@@ -923,8 +1022,10 @@ function renderLeads() {
     return;
   }
   el.innerHTML = filtered.map(l => {
-    const thumb = l.photos.front
-      ? `<img src="${l.photos.front}" style="width:56px;height:36px;border-radius:6px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0">`
+    const frontSrc = l.photos?.front || null;
+    const backSrc = l.photos?.back || null;
+    const thumb = frontSrc
+      ? `<img src="${frontSrc}" onclick="openLightbox('${l.id}')" style="width:56px;height:36px;border-radius:6px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;cursor:zoom-in">`
       : `<div style="width:56px;height:36px;border-radius:6px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📇</div>`;
     const skuSummary = l.skus?.length ? l.skus.map(s => `${s.code} ×${s.qty}`).join(', ') : 'No SKUs noted';
     const preview = l.cardNotes || l.otherNotes || '';
@@ -938,6 +1039,7 @@ function renderLeads() {
         </div>
       </div>
       ${preview ? `<div class="lead-notes-preview">${preview.substring(0,120)}${preview.length>120?'…':''}</div>` : ''}
+      ${activeShow ? `<button class="archive-single-btn" onclick="archiveSingleLead(${l.id})">🗂 Archive to: ${activeShow.name}</button>` : `<button class="archive-single-btn" style="border-style:dashed;opacity:0.6" onclick="noShowPrompt()">🗂 Set a show name to archive</button>`}
       <div class="lead-actions">
         <button class="crm-btn" onclick="sendToOdoo(${l.id})">📧 Send to Odoo CRM</button>
         <button class="delete-btn" onclick="deleteLead(${l.id})">🗑</button>
@@ -1056,41 +1158,55 @@ function startVoice() {
   voiceTranscript = '';
   recognition = new SpeechRecognition();
   recognition.continuous = true;
-  recognition.interimResults = false;
+  recognition.interimResults = true;
   recognition.lang = 'en-US';
   recognition.onresult = (e) => {
     voiceTranscript = Array.from(e.results).map(r => r[0].transcript).join(' ');
+    // Show live transcript in status
+    const words = voiceTranscript.split(' ').slice(-6).join(' ');
+    document.getElementById('voiceStatus').textContent = '🎙 ' + words + '…';
   };
-  recognition.onerror = () => stopVoice();
+  recognition.onerror = (e) => { stopVoice(); };
   recognition.onend = () => { if (isRecording) recognition.start(); };
   recognition.start();
   isRecording = true;
   document.getElementById('voiceBtn').classList.add('recording');
   document.getElementById('voiceBtnIcon').textContent = '⏹';
-  document.getElementById('voiceBtnLabel').textContent = 'Stop Recording';
-  document.getElementById('voiceStatus').textContent = '● Recording… tap to stop';
+  document.getElementById('voiceBtnLabel').textContent = 'Tap to Stop Recording';
   document.getElementById('voiceIndicator').style.display = 'none';
+  document.getElementById('voiceWave').style.display = 'flex';
+  startWaveAnimation();
 }
 
 function stopVoice() {
   if (recognition) { recognition.stop(); recognition = null; }
   isRecording = false;
+  stopWaveAnimation();
   document.getElementById('voiceBtn').classList.remove('recording');
   document.getElementById('voiceBtnIcon').textContent = '🎤';
   document.getElementById('voiceBtnLabel').textContent = 'Record Voice Note';
   document.getElementById('voiceStatus').textContent = '';
+  document.getElementById('voiceWave').style.display = 'none';
   if (voiceTranscript) {
     document.getElementById('cardNotes').placeholder = 'Voice note added';
     document.getElementById('voiceIndicator').style.display = 'flex';
-    document.getElementById('cardNotes').value = '';
-  voiceTranscript = '';
-  document.getElementById('voiceIndicator').style.display = 'none';
-  document.getElementById('voiceBtnIcon').textContent = '🎤';
-  document.getElementById('voiceBtnLabel').textContent = 'Record Voice Note';
-  document.getElementById('ocrBtn').style.display = 'none';
-  document.getElementById('ocrField').style.display = 'none';
-  document.getElementById('ocrResult').textContent = '';
   }
+}
+
+// ── WAVE ANIMATION ──────────────────────────────────────────────────────────
+let waveInterval = null;
+function startWaveAnimation() {
+  const bars = document.querySelectorAll('.wave-bar');
+  waveInterval = setInterval(() => {
+    bars.forEach(bar => {
+      const h = Math.floor(Math.random() * 28) + 6;
+      bar.style.height = h + 'px';
+    });
+  }, 120);
+}
+function stopWaveAnimation() {
+  clearInterval(waveInterval);
+  document.querySelectorAll('.wave-bar').forEach(b => b.style.height = '6px');
 }
 
 // ── OCR ─────────────────────────────────────────────────────────────────────
@@ -1098,22 +1214,31 @@ async function runOCR() {
   const photoSrc = photos.front || photos.back;
   if (!photoSrc) return;
   document.getElementById('ocrStatus').textContent = '🔍 Scanning card…';
+  document.getElementById('ocrStatus').style.color = 'var(--muted)';
   document.getElementById('ocrBtn').disabled = true;
+  document.getElementById('ocrBtn').style.opacity = '0.6';
   try {
     const { createWorker } = Tesseract;
     const worker = await createWorker('eng');
     const { data: { text } } = await worker.recognize(photoSrc);
     await worker.terminate();
     const cleaned = text.trim().replace(/\n{3,}/g, '\n\n');
+    if (!cleaned) throw new Error('No text found');
     document.getElementById('ocrResult').textContent = cleaned;
     document.getElementById('ocrField').style.display = 'block';
     document.getElementById('cardNotes').value = cleaned;
-    document.getElementById('ocrStatus').textContent = '✅ Card scanned!';
-    setTimeout(() => document.getElementById('ocrStatus').textContent = '', 2000);
+    document.getElementById('ocrStatus').textContent = '✅ Card scanned successfully!';
+    document.getElementById('ocrStatus').style.color = 'green';
+    document.getElementById('ocrBtn').textContent = '';
+    document.getElementById('ocrBtn').innerHTML = '🔍 Scan Again';
+    setTimeout(() => document.getElementById('ocrStatus').textContent = '', 3000);
   } catch(e) {
-    document.getElementById('ocrStatus').textContent = 'Scan failed — try again';
+    document.getElementById('ocrStatus').textContent = '⚠️ Scan failed — tap to try again, or just type your notes below';
+    document.getElementById('ocrStatus').style.color = '#e74c3c';
+    document.getElementById('ocrBtn').innerHTML = '🔍 Try Scan Again';
   }
   document.getElementById('ocrBtn').disabled = false;
+  document.getElementById('ocrBtn').style.opacity = '1';
 }
 
 // ── DELETE LEAD ─────────────────────────────────────────────────────────────
@@ -1142,39 +1267,143 @@ function setFilter(type) {
 }
 
 
-// ── ARCHIVE ──────────────────────────────────────────────────────────────────
-function archiveCurrentLeads() {
-  const name = document.getElementById('showName').value.trim();
-  if (!name) { document.getElementById('archiveStatus').textContent = 'Please enter a show name first.'; return; }
-  if (!leads.length) { document.getElementById('archiveStatus').textContent = 'No active leads to archive.'; return; }
+// ── ACTIVE SHOW ───────────────────────────────────────────────────────────────
+let activeShow = JSON.parse(localStorage.getItem('ff_activeShow') || 'null');
 
-  if (!confirm(`Archive ${leads.length} lead${leads.length>1?'s':''} under "${name}"? Your active leads list will be cleared.`)) return;
+function saveActiveShow() {
+  localStorage.setItem('ff_activeShow', JSON.stringify(activeShow));
+}
 
+function renderActiveShowSection() {
+  const el = document.getElementById('activeShowSection');
+  if (!el) return;
+  if (activeShow) {
+    // Count how many leads are in this show's archive folder
+    const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+    const folder = archives.find(a => a.id === activeShow.id);
+    const archivedCount = folder ? folder.leads.length : 0;
+    el.innerHTML = `
+      <div class="archive-box" style="border-color:#27ae60;background:#f0fff4">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="card-title" style="color:#27ae60">✅ Active Show</div>
+            <div style="font-size:18px;font-weight:800;color:#1a1a1a;margin:4px 0">${activeShow.name}</div>
+            <div style="font-size:12px;color:var(--muted)">Started ${activeShow.date} · ${archivedCount} lead${archivedCount!==1?'s':''} archived</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="archive-action-btn primary" style="background:#27ae60;border-color:#27ae60" onclick="archiveAllToShow()">🗂 Archive All Active Leads</button>
+          <button class="archive-action-btn secondary" style="border-color:#e74c3c;color:#e74c3c" onclick="endShow()">⏹ End Show</button>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase">Past Shows</div>`;
+  } else {
+    el.innerHTML = `
+      <div class="archive-box">
+        <div class="card-title">🎪 Set Up a Show</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5">Name your show before you start. All leads you archive will go straight into this folder automatically.</p>
+        <div class="archive-input-row">
+          <input type="text" id="newShowNameInput" placeholder="e.g. NY Trade Show March 2026">
+          <button class="archive-save-btn" onclick="startShow()">Start</button>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase">Past Shows</div>`;
+  }
+}
+
+function startShow() {
+  const input = document.getElementById('newShowNameInput');
+  const name = input ? input.value.trim() : '';
+  if (!name) { alert('Please enter a show name.'); return; }
+
+  // Create the archive folder immediately
   const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
-  archives.unshift({
-    id: Date.now(),
-    name: name,
-    date: new Date().toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }),
-    leads: [...leads]
-  });
+  const id = Date.now();
+  const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+  archives.unshift({ id, name, date, leads: [] });
   localStorage.setItem('ff_archives', JSON.stringify(archives));
 
-  // Clear active leads
+  activeShow = { id, name, date };
+  saveActiveShow();
+  renderActiveShowSection();
+  renderArchives();
+  renderLeads(); // refresh archive button label
+  showToast('🎪 Show started: ' + name);
+}
+
+function endShow() {
+  if (!confirm(`End "${activeShow.name}"? You can still view and export it in Past Shows.`)) return;
+  activeShow = null;
+  saveActiveShow();
+  renderActiveShowSection();
+  renderArchives();
+  renderLeads();
+  showToast('Show ended. Start a new one anytime.');
+}
+
+function archiveAllToShow() {
+  if (!activeShow) { noShowPrompt(); return; }
+  if (!leads.length) { showToast('No active leads to archive.'); return; }
+  if (!confirm(`Move all ${leads.length} active lead${leads.length>1?'s':''} into "${activeShow.name}"?`)) return;
+
+  const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+  const folder = archives.find(a => a.id === activeShow.id);
+  if (folder) {
+    folder.leads.unshift(...leads);
+  } else {
+    archives.unshift({ id: activeShow.id, name: activeShow.name, date: activeShow.date, leads: [...leads] });
+  }
+  localStorage.setItem('ff_archives', JSON.stringify(archives));
   leads = [];
   localStorage.setItem('ff_leads', JSON.stringify(leads));
   updateLeadCount();
-
-  document.getElementById('showName').value = '';
-  document.getElementById('archiveStatus').textContent = '✅ Archived successfully!';
-  setTimeout(() => document.getElementById('archiveStatus').textContent = '', 3000);
+  renderActiveShowSection();
   renderArchives();
+  renderLeads();
+  showToast('🗂 All leads archived!');
+}
+
+function noShowPrompt() {
+  showToast('Go to Archive tab to set up a show first');
+  // Flash archive tab
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.includes('Archive')) {
+      b.style.background = '#e74c3c';
+      b.style.color = 'white';
+      setTimeout(() => { b.style.background=''; b.style.color=''; }, 800);
+    }
+  });
+}
+
+// ── ARCHIVE SINGLE LEAD (instant — goes to active show) ───────────────────
+function archiveSingleLead(id) {
+  if (!activeShow) { noShowPrompt(); return; }
+  const lead = leads.find(l => l.id === id);
+  if (!lead) return;
+
+  const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
+  const folder = archives.find(a => a.id === activeShow.id);
+  if (folder) {
+    folder.leads.unshift(lead);
+  } else {
+    archives.unshift({ id: activeShow.id, name: activeShow.name, date: activeShow.date, leads: [lead] });
+  }
+  localStorage.setItem('ff_archives', JSON.stringify(archives));
+
+  leads = leads.filter(l => l.id !== id);
+  localStorage.setItem('ff_leads', JSON.stringify(leads));
+  updateLeadCount();
+  renderLeads();
+  renderActiveShowSection();
+  showToast(`🗂 Archived to: ${activeShow.name}`);
 }
 
 function renderArchives() {
+  renderActiveShowSection();
   const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
   const el = document.getElementById('archiveList');
   if (!archives.length) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">🗂</div><p>No archived shows yet.</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="icon">🗂</div><p>No past shows yet.</p></div>';
     return;
   }
   el.innerHTML = archives.map((show, si) => `
@@ -1252,6 +1481,51 @@ function deleteArchive(id) {
   archives = archives.filter(a => a.id !== id);
   localStorage.setItem('ff_archives', JSON.stringify(archives));
   renderArchives();
+}
+
+
+// single lead archive handled by archiveSingleLead()
+
+
+// ── LIGHTBOX ─────────────────────────────────────────────────────────────────
+let lightboxLeadId = null;
+let lightboxSide = 'front';
+
+function openLightbox(leadId) {
+  const lead = leads.find(l => String(l.id) === String(leadId));
+  if (!lead) return;
+  lightboxLeadId = leadId;
+  lightboxSide = lead.photos?.front ? 'front' : 'back';
+
+  const frontSrc = lead.photos?.front;
+  const backSrc = lead.photos?.back;
+
+  document.getElementById('lightboxImg').src = frontSrc || backSrc;
+  document.getElementById('lbFrontBtn').disabled = !frontSrc;
+  document.getElementById('lbBackBtn').disabled = !backSrc;
+  document.getElementById('lbFrontBtn').classList.toggle('active', lightboxSide === 'front');
+  document.getElementById('lbBackBtn').classList.toggle('active', lightboxSide === 'back');
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function switchLightbox(side) {
+  const lead = leads.find(l => String(l.id) === String(lightboxLeadId));
+  if (!lead) return;
+  const src = lead.photos?.[side];
+  if (!src) return;
+  lightboxSide = side;
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lbFrontBtn').classList.toggle('active', side === 'front');
+  document.getElementById('lbBackBtn').classList.toggle('active', side === 'back');
+}
+
+function closeLightbox(e) {
+  if (e.target === document.getElementById('lightbox')) closeLightboxDirect();
+}
+
+function closeLightboxDirect() {
+  document.getElementById('lightbox').classList.remove('open');
+  lightboxLeadId = null;
 }
 
 </script>
