@@ -332,17 +332,6 @@
   .filter-pill.active { background: var(--accent); color: white; }
 
 
-  /* OCR */
-  .ocr-btn {
-    width: 100%; margin-bottom: 10px; padding: 12px;
-    border-radius: 10px; border: 2px dashed var(--accent);
-    background: white; color: var(--accent);
-    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .ocr-btn:active { background: var(--surface2); }
-
-
   /* ARCHIVE */
   .archive-show-card {
     background: white; border: 2px solid var(--accent);
@@ -525,14 +514,6 @@
         <button class="remove-btn" onclick="removePhoto(event,'back')">✕</button>
       </div>
     </div>
-    <div class="field" id="ocrField" style="display:none">
-      <label>📋 Scanned from card</label>
-      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;font-size:14px;color:#333;line-height:1.5" id="ocrResult"></div>
-    </div>
-    <button class="ocr-btn" id="ocrBtn" onclick="runOCR()" style="display:none">
-      🔍 Scan Card for Contact Details
-    </button>
-    <div class="voice-status" id="ocrStatus"></div>
     <div class="field">
       <label>Notes</label>
       <div class="notes-wrap">
@@ -758,8 +739,7 @@ const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorad
 const COUNTRIES = ['Argentina','Australia','Austria','Belgium','Brazil','Canada','Chile','China','Colombia','Czech Republic','Denmark','Egypt','Finland','France','Germany','Greece','Hong Kong','India','Indonesia','Ireland','Israel','Italy','Japan','Malaysia','Mexico','Netherlands','New Zealand','Nigeria','Norway','Philippines','Poland','Portugal','Saudi Arabia','Singapore','South Africa','South Korea','Spain','Sweden','Switzerland','Taiwan','Thailand','Turkey','United Arab Emirates','United Kingdom','Vietnam'];
 
 let leads = JSON.parse(localStorage.getItem('ff_leads') || '[]');
-// Ensure lead count is correct on load
-document.addEventListener('DOMContentLoaded', () => { updateLeadCount(); });
+
 let photos = { front: null, back: null };
 let qtys = {};
 let selectedBizType = null;
@@ -820,11 +800,7 @@ function handlePhoto(side, input) {
     const slot = document.getElementById('slot-' + side);
     slot.innerHTML = `<img src="${e.target.result}"><button class="remove-btn" onclick="removePhoto(event,'${side}')">✕</button>`;
     slot.classList.add('has-photo');
-    const btn = document.getElementById('ocrBtn');
-    btn.style.display = 'flex';
-    btn.innerHTML = '🔍 Scan Card for Contact Details';
-    document.getElementById('ocrStatus').textContent = '';
-    document.getElementById('ocrStatus').style.color = 'var(--muted)';
+
   };
   reader.readAsDataURL(file);
 }
@@ -933,10 +909,12 @@ function saveLead() {
   localStorage.setItem('ff_leads', JSON.stringify(leads));
   updateLeadCount();
   resetForm();
-  // Switch to My Leads tab so user can see the saved lead
-  const leadsBtn = document.querySelector('.nav-btn:nth-child(2)');
-  showPage('leads', leadsBtn);
   showToast('✦ Lead saved!');
+  // Switch to My Leads after short delay so toast is visible
+  setTimeout(() => {
+    const leadsBtn = [...document.querySelectorAll('.nav-btn')].find(b => b.textContent.includes('My Leads'));
+    if (leadsBtn) showPage('leads', leadsBtn);
+  }, 800);
 }
 
 function resetForm() {
@@ -952,9 +930,7 @@ function resetForm() {
   document.getElementById('voiceIndicator').style.display = 'none';
   document.getElementById('voiceBtnIcon').textContent = '🎤';
   document.getElementById('voiceBtnLabel').textContent = 'Record Voice Note';
-  document.getElementById('ocrBtn').style.display = 'none';
-  document.getElementById('ocrField').style.display = 'none';
-  document.getElementById('ocrResult').textContent = '';
+
   document.getElementById('voiceWave').style.display = 'none';
   stopWaveAnimation();
   document.querySelectorAll('.pill.selected, .check-pill.selected').forEach(p => p.classList.remove('selected'));
@@ -1167,13 +1143,19 @@ function startVoice() {
   voiceTranscript = '';
   recognition = new SpeechRecognition();
   recognition.continuous = true;
-  recognition.interimResults = true;
+  recognition.interimResults = false;
   recognition.lang = 'en-US';
   recognition.onresult = (e) => {
-    voiceTranscript = Array.from(e.results).map(r => r[0].transcript).join(' ');
-    // Show live transcript in status
-    const words = voiceTranscript.split(' ').slice(-6).join(' ');
-    document.getElementById('voiceStatus').textContent = '🎙 ' + words + '…';
+    let interim = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        voiceTranscript += e.results[i][0].transcript + ' ';
+      } else {
+        interim = e.results[i][0].transcript;
+      }
+    }
+    const display = (voiceTranscript + interim).trim().split(' ').slice(-6).join(' ');
+    document.getElementById('voiceStatus').textContent = '🎙 ' + display + (display ? '…' : 'Listening…');
   };
   recognition.onerror = (e) => { stopVoice(); };
   recognition.onend = () => { if (isRecording) recognition.start(); };
@@ -1218,43 +1200,7 @@ function stopWaveAnimation() {
   document.querySelectorAll('.wave-bar').forEach(b => b.style.height = '6px');
 }
 
-// ── OCR ─────────────────────────────────────────────────────────────────────
-async function runOCR() {
-  const photoSrc = photos.front || photos.back;
-  if (!photoSrc) return;
-  const statusEl = document.getElementById('ocrStatus');
-  const btn = document.getElementById('ocrBtn');
-  statusEl.textContent = '🔍 Scanning card… this may take a moment';
-  statusEl.style.color = 'var(--accent)';
-  btn.disabled = true;
-  btn.style.opacity = '0.6';
-  try {
-    const worker = await Tesseract.createWorker('eng', 1, {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          statusEl.textContent = '🔍 Scanning… ' + Math.round(m.progress * 100) + '%';
-        }
-      }
-    });
-    const { data: { text } } = await worker.recognize(photoSrc);
-    await worker.terminate();
-    const cleaned = text.trim().replace(/\n{3,}/g, '\n\n');
-    if (!cleaned || cleaned.length < 5) throw new Error('No text found');
-    document.getElementById('ocrResult').textContent = cleaned;
-    document.getElementById('ocrField').style.display = 'block';
-    document.getElementById('cardNotes').value = cleaned;
-    statusEl.textContent = '✅ Card scanned!';
-    statusEl.style.color = 'green';
-    btn.innerHTML = '🔍 Scan Again';
-    setTimeout(() => statusEl.textContent = '', 3000);
-  } catch(e) {
-    statusEl.textContent = '⚠️ Scan failed — tap to try again, or just type notes below';
-    statusEl.style.color = '#e74c3c';
-    btn.innerHTML = '🔍 Try Scan Again';
-  }
-  btn.disabled = false;
-  btn.style.opacity = '1';
-}
+
 
 // ── DELETE LEAD ─────────────────────────────────────────────────────────────
 function deleteLead(id) {
@@ -1347,6 +1293,7 @@ function startShow() {
 }
 
 function endShow() {
+  if (!activeShow) return;
   if (!confirm(`End "${activeShow.name}"? You can still view and export it in Past Shows.`)) return;
   activeShow = null;
   saveActiveShow();
@@ -1450,13 +1397,14 @@ function renderArchives() {
 function toggleArchiveShow(id) {
   const el = document.getElementById('show-leads-' + id);
   const arrow = document.getElementById('arrow-' + id);
+  if (!el) return;
   el.classList.toggle('open');
   arrow.textContent = el.classList.contains('open') ? '▴' : '▾';
 }
 
 function exportArchiveCSV(id) {
   const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
-  const show = archives.find(a => a.id === id);
+  const show = archives.find(a => String(a.id) === String(id));
   if (!show) return;
   const rows = [['Date','Biz Type','Card Notes','Store URL','Doors','Locations','Territory','States','Countries','Marketplaces','Fulfillment','Mfg Products','Mfg Countries','Agent Store Types','Other Notes','Voice Note',...SKUS.map(s=>s.code)]];
   show.leads.forEach(l => {
@@ -1481,25 +1429,29 @@ function exportArchiveCSV(id) {
 
 function restoreArchive(id) {
   const archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
-  const show = archives.find(a => a.id === id);
+  const show = archives.find(a => String(a.id) === String(id));
   if (!show) return;
   if (!confirm(`Restore ${show.leads.length} leads from "${show.name}" to your active list?`)) return;
   leads = [...show.leads, ...leads];
   localStorage.setItem('ff_leads', JSON.stringify(leads));
   updateLeadCount();
+  renderLeads();
   showToast('✦ Leads restored!');
 }
 
 function deleteArchive(id) {
   if (!confirm('Permanently delete this archived show? This cannot be undone.')) return;
   let archives = JSON.parse(localStorage.getItem('ff_archives') || '[]');
-  archives = archives.filter(a => a.id !== id);
+  archives = archives.filter(a => String(a.id) !== String(id));
   localStorage.setItem('ff_archives', JSON.stringify(archives));
   renderArchives();
 }
 
 
 // single lead archive handled by archiveSingleLead()
+
+// Init on load
+window.addEventListener('load', () => { updateLeadCount(); });
 
 
 // ── LIGHTBOX ─────────────────────────────────────────────────────────────────
@@ -1544,6 +1496,6 @@ function closeLightboxDirect() {
 }
 
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+
 </body>
 </html>
