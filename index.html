@@ -1108,6 +1108,9 @@ function showPage(page, btn) {
 }
 
 function updateLeadCount() {
+  // Always read from storage to stay in sync on iOS
+  const stored = JSON.parse(localStorage.getItem('ff_leads') || '[]');
+  leads = stored;
   const count = leads.length;
   document.getElementById('leadCount').textContent = count + (count === 1 ? ' lead' : ' leads');
 }
