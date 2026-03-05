@@ -531,7 +531,7 @@
   </div>
 </div>
 <div class="nav">
-  <button class="nav-btn active" onclick="showPage('capture', this)">＋ New Lead</button>
+  <button class="nav-btn active" onclick="newLead(this)">＋ New Lead</button>
   <button class="nav-btn" onclick="showPage('leads', this)">My Leads</button>
   <button class="nav-btn" onclick="showPage('archive', this)">🗂 Archive</button>
 </div>
@@ -960,9 +960,7 @@ function saveLead() {
   leads.unshift(lead);
   localStorage.setItem('ff_leads', JSON.stringify(leads));
   updateLeadCount();
-  showToast('✦ Lead saved!');
-  showPage('leads');   // switch tab first
-  resetForm();         // then clear the form behind it
+  showToast('✦ Lead saved! Tap + New Lead to add another.');
 }
 
 function resetForm() {
@@ -1085,6 +1083,12 @@ function exportCSV() {
   a.href = url;
   a.download = `flavafil-leads-${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
+}
+
+
+function newLead(btn) {
+  resetForm();
+  showPage('capture', btn);
 }
 
 function showPage(page, btn) {
