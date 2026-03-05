@@ -758,6 +758,8 @@ const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorad
 const COUNTRIES = ['Argentina','Australia','Austria','Belgium','Brazil','Canada','Chile','China','Colombia','Czech Republic','Denmark','Egypt','Finland','France','Germany','Greece','Hong Kong','India','Indonesia','Ireland','Israel','Italy','Japan','Malaysia','Mexico','Netherlands','New Zealand','Nigeria','Norway','Philippines','Poland','Portugal','Saudi Arabia','Singapore','South Africa','South Korea','Spain','Sweden','Switzerland','Taiwan','Thailand','Turkey','United Arab Emirates','United Kingdom','Vietnam'];
 
 let leads = JSON.parse(localStorage.getItem('ff_leads') || '[]');
+// Ensure lead count is correct on load
+document.addEventListener('DOMContentLoaded', () => { updateLeadCount(); });
 let photos = { front: null, back: null };
 let qtys = {};
 let selectedBizType = null;
@@ -931,6 +933,9 @@ function saveLead() {
   localStorage.setItem('ff_leads', JSON.stringify(leads));
   updateLeadCount();
   resetForm();
+  // Switch to My Leads tab so user can see the saved lead
+  const leadsBtn = document.querySelector('.nav-btn:nth-child(2)');
+  showPage('leads', leadsBtn);
   showToast('✦ Lead saved!');
 }
 
@@ -1034,7 +1039,10 @@ function renderLeads() {
         ${thumb}
         <div class="lead-meta">
           <div class="lead-time">${l.timestamp}</div>
-          <div>${l.bizType ? `<span class="biz-tag">${l.bizType}</span>` : '<span style="font-size:11px;color:var(--muted)">No type set</span>'}</div>
+          <div>
+            ${l.bizType ? `<span class="biz-tag">${l.bizType}</span>` : '<span style="font-size:11px;color:var(--muted)">No type set</span>'}
+            ${l.voiceNote ? `<span class="biz-tag" style="background:#6c5ce7">🎤 Voice</span>` : ''}
+          </div>
           <div class="lead-skus">${skuSummary}</div>
         </div>
       </div>
@@ -1088,7 +1096,8 @@ function showPage(page, btn) {
 }
 
 function updateLeadCount() {
-  document.getElementById('leadCount').textContent = leads.length + (leads.length === 1 ? ' lead' : ' leads');
+  const count = leads.length;
+  document.getElementById('leadCount').textContent = count + (count === 1 ? ' lead' : ' leads');
 }
 
 function showToast(msg) {
@@ -1213,38 +1222,44 @@ function stopWaveAnimation() {
 async function runOCR() {
   const photoSrc = photos.front || photos.back;
   if (!photoSrc) return;
-  document.getElementById('ocrStatus').textContent = '🔍 Scanning card…';
-  document.getElementById('ocrStatus').style.color = 'var(--muted)';
-  document.getElementById('ocrBtn').disabled = true;
-  document.getElementById('ocrBtn').style.opacity = '0.6';
+  const statusEl = document.getElementById('ocrStatus');
+  const btn = document.getElementById('ocrBtn');
+  statusEl.textContent = '🔍 Scanning card… this may take a moment';
+  statusEl.style.color = 'var(--accent)';
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
   try {
-    const { createWorker } = Tesseract;
-    const worker = await createWorker('eng');
+    const worker = await Tesseract.createWorker('eng', 1, {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          statusEl.textContent = '🔍 Scanning… ' + Math.round(m.progress * 100) + '%';
+        }
+      }
+    });
     const { data: { text } } = await worker.recognize(photoSrc);
     await worker.terminate();
     const cleaned = text.trim().replace(/\n{3,}/g, '\n\n');
-    if (!cleaned) throw new Error('No text found');
+    if (!cleaned || cleaned.length < 5) throw new Error('No text found');
     document.getElementById('ocrResult').textContent = cleaned;
     document.getElementById('ocrField').style.display = 'block';
     document.getElementById('cardNotes').value = cleaned;
-    document.getElementById('ocrStatus').textContent = '✅ Card scanned successfully!';
-    document.getElementById('ocrStatus').style.color = 'green';
-    document.getElementById('ocrBtn').textContent = '';
-    document.getElementById('ocrBtn').innerHTML = '🔍 Scan Again';
-    setTimeout(() => document.getElementById('ocrStatus').textContent = '', 3000);
+    statusEl.textContent = '✅ Card scanned!';
+    statusEl.style.color = 'green';
+    btn.innerHTML = '🔍 Scan Again';
+    setTimeout(() => statusEl.textContent = '', 3000);
   } catch(e) {
-    document.getElementById('ocrStatus').textContent = '⚠️ Scan failed — tap to try again, or just type your notes below';
-    document.getElementById('ocrStatus').style.color = '#e74c3c';
-    document.getElementById('ocrBtn').innerHTML = '🔍 Try Scan Again';
+    statusEl.textContent = '⚠️ Scan failed — tap to try again, or just type notes below';
+    statusEl.style.color = '#e74c3c';
+    btn.innerHTML = '🔍 Try Scan Again';
   }
-  document.getElementById('ocrBtn').disabled = false;
-  document.getElementById('ocrBtn').style.opacity = '1';
+  btn.disabled = false;
+  btn.style.opacity = '1';
 }
 
 // ── DELETE LEAD ─────────────────────────────────────────────────────────────
 function deleteLead(id) {
   if (!confirm('Delete this lead? This cannot be undone.')) return;
-  leads = leads.filter(l => l.id !== id);
+  leads = leads.filter(l => String(l.id) !== String(id));
   localStorage.setItem('ff_leads', JSON.stringify(leads));
   updateLeadCount();
   renderLeads();
