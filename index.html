@@ -538,6 +538,7 @@
 
 <!-- CAPTURE PAGE -->
 <div class="page active" id="page-capture">
+  <div id="captureFormWrap">
 
   <!-- BUSINESS CARD PHOTOS -->
   <div class="card">
@@ -719,6 +720,7 @@
   <!-- SAVE -->
   <button class="submit-btn" onclick="saveLead()">✦ Save Lead</button>
   <div style="height:40px"></div>
+  </div>
 </div>
 
 <!-- LEADS PAGE -->
@@ -958,13 +960,12 @@ function saveLead() {
   leads.unshift(lead);
   localStorage.setItem('ff_leads', JSON.stringify(leads));
   updateLeadCount();
-  resetForm();
   showToast('✦ Lead saved!');
-  setTimeout(() => { showPage('leads'); }, 700);
+  showPage('leads');   // switch tab first
+  resetForm();         // then clear the form behind it
 }
 
 function resetForm() {
-  // Data state
   photos = { front: null, back: null };
   qtys = {};
   selectedBizType = null;
@@ -973,51 +974,13 @@ function resetForm() {
   selectedCountries.length = 0;
   selectedMfgCountries.length = 0;
   voiceTranscript = '';
-  if (isRecording) stopVoice();
-
-  // Notes
-  const cn = document.getElementById('cardNotes');
-  if (cn) { cn.value = ''; cn.placeholder = 'Add notes…'; }
-
-  // Voice UI
-  const vi = document.getElementById('voiceIndicator'); if (vi) vi.style.display = 'none';
-  const vbi = document.getElementById('voiceBtnIcon'); if (vbi) vbi.textContent = '🎤';
-  const vbl = document.getElementById('voiceBtnLabel'); if (vbl) vbl.textContent = 'Record Voice Note';
-  const vw = document.getElementById('voiceWave'); if (vw) vw.style.display = 'none';
-  const vs = document.getElementById('voiceStatus'); if (vs) vs.textContent = '';
-  stopWaveAnimation();
-
-  // Form pills and conditionals
-  document.querySelectorAll('.pill.selected, .check-pill.selected').forEach(p => p.classList.remove('selected'));
-  if (typeof BIZ_CONDITIONALS !== 'undefined') {
-    BIZ_CONDITIONALS.forEach(c => { const el = document.getElementById('cond-'+c); if (el) el.classList.remove('show'); });
+  try { if (isRecording) stopVoice(); } catch(e) {}
+  try { stopWaveAnimation(); } catch(e) {}
+  const wrap = document.getElementById('captureFormWrap');
+  if (wrap && window._captureFormTemplate) {
+    wrap.innerHTML = window._captureFormTemplate;
+    renderSkus();
   }
-  ['cond-us-states','cond-int-countries'].forEach(c => { const el = document.getElementById(c); if (el) el.classList.remove('show'); });
-  ['mktPlatforms','ecomUrl','agentExtra'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-
-  // Labels
-  ['statesLabel','countriesLabel','mfgCountriesLabel'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = id.includes('states') ? 'Select states…' : 'Select countries…';
-  });
-
-  // Fields
-  ['numDoors','storeLocText','mfgProducts','agentStoreTypes','otherNotes','storeUrl'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-
-  // SKUs
-  if (typeof renderSkus === 'function') renderSkus();
-
-  // Photo slots
-  ['front','back'].forEach(side => {
-    const slot = document.getElementById('slot-'+side);
-    if (!slot) return;
-    const label = side.charAt(0).toUpperCase()+side.slice(1);
-    slot.innerHTML = `<div class="icon">📷</div><div class="label">${label}</div><input type="file" id="photo-${side}" accept="image/*" capture="environment" onchange="handlePhoto('${side}',this)"><button class="remove-btn" onclick="removePhoto(event,'${side}')">✕</button>`;
-    slot.classList.remove('has-photo');
-  });
-
   window.scrollTo(0, 0);
 }
 
@@ -1602,8 +1565,11 @@ function deleteArchive(id) {
 
 // single lead archive handled by archiveSingleLead()
 
-// Init on load
-window.addEventListener('load', () => { updateLeadCount(); });
+window.addEventListener('load', function() {
+  const wrap = document.getElementById('captureFormWrap');
+  if (wrap) window._captureFormTemplate = wrap.innerHTML;
+  updateLeadCount();
+});
 
 
 // ── LIGHTBOX ─────────────────────────────────────────────────────────────────
